@@ -34,6 +34,54 @@ wget https://huggingface.co/datasets/Zihan1004/FNSPID/resolve/main/Stock_price/f
 wget https://huggingface.co/datasets/Zihan1004/FNSPID/resolve/main/Stock_news/nasdaq_exteral_data.csv
 ```
 
+## Weighted Sentiment CNN Experiment Summary (2026-02)
+This section summarizes the local experiment documented in `dataset_test/CNN-for-Time-Series-Prediction/experiment_summary.md`.
+
+### Goal
+Compare:
+- Baseline sentiment feature (`Scaled_sentiment` as-is)
+- Weighted sentiment feature using news availability and volume spike
+
+Weighted feature design:
+```python
+sent_center = (Sentiment_gpt - 3) / 2  # 1~5 -> -1~1
+vol_z = zscore(Volume, rolling window=N)
+intensity = News_flag * (1 + k * vol_z)
+intensity = clip(intensity, lower=0)
+Scaled_sentiment = sent_center * intensity
+```
+
+### Setup
+- Model: `dataset_test/CNN-for-Time-Series-Prediction`
+- Split: `train_test_split = 0.85`
+- Sequence length: 50
+- Prediction length: 3
+- Tested weighted datasets:
+  - `data_wN10_k0p1`, `data_wN10_k0p3`, `data_wN10_k0p6`
+  - `data_wN20_k0p1`, `data_wN20_k0p3`, `data_wN20_k0p6`
+- Not yet tested: `data_wN60_*`
+
+### Baseline results (sentiment, original data)
+- AMD: MAE 0.097505, MSE 0.014424, R2 0.513303
+- GOOG: MAE 0.052328, MSE 0.003694, R2 0.194527
+- KO: MAE 0.037197, MSE 0.002010, R2 0.547467
+- TSM: MAE 0.088045, MSE 0.011136, R2 0.516412
+- WMT: MAE 0.024453, MSE 0.000930, R2 0.351031
+
+### Key observations from weighted runs
+- TSM and GOOG improved in most weighted configurations.
+- KO showed mixed behavior (small improvements at low k, degradation at higher k in several settings).
+- AMD mostly degraded across weighted settings.
+- WMT degraded in all tested weighted settings (largest drop at k=0.6).
+
+### Best directional improvements observed
+- TSM: best around `wN20, k=0.6` (dMAE -0.021497, dMSE -0.003821, dR2 +0.165917)
+- GOOG: best around `wN10, k=0.6` (dMAE -0.009605, dMSE -0.000932, dR2 +0.203152)
+
+### Repro/Reference files
+- `dataset_test/CNN-for-Time-Series-Prediction/experiment_summary.md`
+- `dataset_test/CNN-for-Time-Series-Prediction/comparison_cnn_weighted_5.csv`
+
 ### Related Financial Datasets: 
 [Financial-News-Datasets 2013](https://github.com/philipperemy/financial-news-dataset)
 
