@@ -1,6 +1,7 @@
 __copyright__ = "Fan xinyu 2024"
 
 import os
+import sys
 import json
 import time
 import math
@@ -10,7 +11,14 @@ import numpy as np
 import pandas as pd
 from sklearn.metrics import mean_absolute_error, mean_squared_error, r2_score
 from datetime import datetime
-from core.data_processor import DataLoader
+
+# 프로젝트 루트를 path에 추가해 dataset.FNSPIDDataset 사용 (날짜 기준 split)
+_script_dir = os.path.dirname(os.path.abspath(__file__))
+_repo_root = os.path.dirname(os.path.dirname(_script_dir))
+if _repo_root not in sys.path:
+    sys.path.insert(0, _repo_root)
+from dataset import FNSPIDDataset as DataLoader
+
 from core.CNN_modified_model import Model
 
 # 生成带有当前时间的文件夹名
